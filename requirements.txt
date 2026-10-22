@@ -1,4 +1,5 @@
-streamlit==1.50.0numpy
+streamlit
+numpy
 pandas
 matplotlib
 scipy
