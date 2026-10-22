@@ -142,6 +142,7 @@ st.info(
 )
 
 
+
 # Input controls
 with st.sidebar:
     st.header("Input Settings")
@@ -152,7 +153,8 @@ with st.sidebar:
         max_value=10,
         value=2,
         step=1,
-        key="occupancy"
+        key="occupancy",
+        label_visibility="visible"
     )
 
     temperature = st.slider(
@@ -161,7 +163,8 @@ with st.sidebar:
         max_value=35,
         value=30,
         step=1,
-        key="temperature"
+        key="temperature",
+        label_visibility="visible"
     )
 
     natural_light = st.slider(
@@ -170,7 +173,8 @@ with st.sidebar:
         max_value=100,
         value=40,
         step=1,
-        key="natural_light"
+        key="natural_light",
+        label_visibility="visible"
     )
 
     calculate = st.button(
