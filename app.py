@@ -4,13 +4,18 @@ import numpy as np
 import skfuzzy as fuzz
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Smart Home Energy Management", page_icon="🏠", layout="wide")
+st.set_page_config(
+    page_title="Smart Home Energy Management",
+    page_icon="🏠",
+    layout="wide"
+)
 
-# Fuzzy input ranges and membership functions
+# Fuzzy input ranges
 occupancy_range = np.arange(0, 11, 1)
 temperature_range = np.arange(15, 36, 1)
 light_range = np.arange(0, 101, 1)
 
+# Membership functions
 occupancy_zero = fuzz.trapmf(occupancy_range, [0, 0, 0, 1])
 occupancy_few = fuzz.trapmf(occupancy_range, [0, 1, 3, 5])
 occupancy_many = fuzz.trapmf(occupancy_range, [3, 5, 10, 10])
@@ -23,11 +28,13 @@ light_dark = fuzz.trapmf(light_range, [0, 0, 20, 45])
 light_dim = fuzz.trapmf(light_range, [30, 45, 55, 75])
 light_bright = fuzz.trapmf(light_range, [60, 80, 100, 100])
 
-# Create the same 27 rules used in the notebook
+# Generate the 27 fuzzy rules
 rules = []
+
 for occupancy_label in ["Zero", "Few", "Many"]:
     for temperature_label in ["Cold", "Normal", "Hot"]:
         for light_label in ["Dark", "Dim", "Bright"]:
+
             if occupancy_label == "Zero":
                 ac_power = 0
                 lighting_power = 0
@@ -54,21 +61,42 @@ for occupancy_label in ["Zero", "Few", "Many"]:
                 "Lighting Power": lighting_power
             })
 
+
 def calculate_fuzzy_output(occupancy, temperature, natural_light):
     occupancy_degrees = {
-        "Zero": fuzz.interp_membership(occupancy_range, occupancy_zero, occupancy),
-        "Few": fuzz.interp_membership(occupancy_range, occupancy_few, occupancy),
-        "Many": fuzz.interp_membership(occupancy_range, occupancy_many, occupancy)
+        "Zero": fuzz.interp_membership(
+            occupancy_range, occupancy_zero, occupancy
+        ),
+        "Few": fuzz.interp_membership(
+            occupancy_range, occupancy_few, occupancy
+        ),
+        "Many": fuzz.interp_membership(
+            occupancy_range, occupancy_many, occupancy
+        )
     }
+
     temperature_degrees = {
-        "Cold": fuzz.interp_membership(temperature_range, temperature_cold, temperature),
-        "Normal": fuzz.interp_membership(temperature_range, temperature_normal, temperature),
-        "Hot": fuzz.interp_membership(temperature_range, temperature_hot, temperature)
+        "Cold": fuzz.interp_membership(
+            temperature_range, temperature_cold, temperature
+        ),
+        "Normal": fuzz.interp_membership(
+            temperature_range, temperature_normal, temperature
+        ),
+        "Hot": fuzz.interp_membership(
+            temperature_range, temperature_hot, temperature
+        )
     }
+
     light_degrees = {
-        "Dark": fuzz.interp_membership(light_range, light_dark, natural_light),
-        "Dim": fuzz.interp_membership(light_range, light_dim, natural_light),
-        "Bright": fuzz.interp_membership(light_range, light_bright, natural_light)
+        "Dark": fuzz.interp_membership(
+            light_range, light_dark, natural_light
+        ),
+        "Dim": fuzz.interp_membership(
+            light_range, light_dim, natural_light
+        ),
+        "Bright": fuzz.interp_membership(
+            light_range, light_bright, natural_light
+        )
     }
 
     weighted_ac = 0.0
@@ -81,6 +109,7 @@ def calculate_fuzzy_output(occupancy, temperature, natural_light):
             temperature_degrees[rule["Temperature"]],
             light_degrees[rule["Natural Light"]]
         )
+
         if alpha > 0:
             weighted_ac += alpha * rule["AC Power"]
             weighted_light += alpha * rule["Lighting Power"]
@@ -88,53 +117,165 @@ def calculate_fuzzy_output(occupancy, temperature, natural_light):
 
     if total_strength == 0:
         return 0.0, 0.0
-    return weighted_ac / total_strength, weighted_light / total_strength
 
+    return (
+        weighted_ac / total_strength,
+        weighted_light / total_strength
+    )
+
+
+# Initialize session state
+if "calculated" not in st.session_state:
+    st.session_state.calculated = False
+
+if "results" not in st.session_state:
+    st.session_state.results = None
+
+
+# Page heading
 st.title("🏠 Smart Home Energy Management")
-st.caption("Fuzzy Logic Controller • Interactive Simulation")
-st.info("غيّر القيم من لوحة التحكم واضغط على زر حساب النتائج. هذه محاكاة لمستويات التحكم وليست قياسًا فعليًا لاستهلاك الكهرباء.")
+st.caption("Fuzzy Logic Controller | Interactive Simulation")
 
+st.info(
+    "Adjust the input values and click Calculate to generate the results. "
+    "This simulation displays control levels, not actual electricity consumption."
+)
+
+
+# Input controls
 with st.sidebar:
     st.header("Input Settings")
-    occupancy = st.slider("Number of people", min_value=0, max_value=10, value=2, step=1)
-    temperature = st.slider("Room temperature (°C)", min_value=15, max_value=35, value=30, step=1)
-    natural_light = st.slider("Natural light (%)", min_value=0, max_value=100, value=40, step=1)
-    calculate = st.button("Calculate", type="primary", use_container_width=True)
 
-# Compute on each rerun so sliders work naturally; button is a visual cue.
-ac_power, lighting_power = calculate_fuzzy_output(occupancy, temperature, natural_light)
+    occupancy = st.slider(
+        "Number of people",
+        min_value=0,
+        max_value=10,
+        value=2,
+        step=1,
+        key="occupancy"
+    )
 
-st.subheader("Current Room Conditions")
-c1, c2, c3 = st.columns(3)
-c1.metric("People", f"{occupancy}")
-c2.metric("Temperature", f"{temperature} °C")
-c3.metric("Natural light", f"{natural_light}%")
+    temperature = st.slider(
+        "Room temperature (°C)",
+        min_value=15,
+        max_value=35,
+        value=30,
+        step=1,
+        key="temperature"
+    )
 
-st.subheader("Recommended Control Levels")
-m1, m2 = st.columns(2)
-m1.metric("❄️ AC power level", f"{ac_power:.1f}%")
-m2.metric("💡 Lighting power level", f"{lighting_power:.1f}%")
+    natural_light = st.slider(
+        "Natural light (%)",
+        min_value=0,
+        max_value=100,
+        value=40,
+        step=1,
+        key="natural_light"
+    )
 
-g1, g2 = st.columns(2)
-with g1:
-    st.write("**Air Conditioner**")
-    st.progress(int(np.clip(round(ac_power), 0, 100)))
-    st.write(f"{ac_power:.1f}%")
-with g2:
-    st.write("**Lighting**")
-    st.progress(int(np.clip(round(lighting_power), 0, 100)))
-    st.write(f"{lighting_power:.1f}%")
+    calculate = st.button(
+        "Calculate",
+        type="primary",
+        use_container_width=True
+    )
 
-st.subheader("Output Comparison")
-fig, ax = plt.subplots(figsize=(7, 3.5))
-ax.bar(["AC Power", "Lighting Power"], [ac_power, lighting_power])
-ax.set_ylim(0, 100)
-ax.set_ylabel("Control level (%)")
-ax.grid(axis="y", alpha=0.25)
-st.pyplot(fig, clear_figure=True)
-plt.close(fig)
 
-with st.expander("Show the 27 fuzzy rules"):
-    st.dataframe(pd.DataFrame(rules), use_container_width=True, hide_index=True)
+# Calculate only after clicking the button
+if calculate:
+    ac_power, lighting_power = calculate_fuzzy_output(
+        occupancy,
+        temperature,
+        natural_light
+    )
 
-st.caption("Project note: output values are control percentages generated by the project's fuzzy rules, not real kWh consumption.")
+    st.session_state.results = {
+        "occupancy": occupancy,
+        "temperature": temperature,
+        "natural_light": natural_light,
+        "ac_power": ac_power,
+        "lighting_power": lighting_power
+    }
+
+    st.session_state.calculated = True
+
+
+# Display results
+if not st.session_state.calculated:
+    st.subheader("Ready to Calculate")
+    st.write(
+        "Select the room conditions from the sidebar, "
+        "then click Calculate to display the results."
+    )
+
+else:
+    results = st.session_state.results
+
+    st.subheader("Calculated Room Conditions")
+
+    c1, c2, c3 = st.columns(3)
+
+    c1.metric("Number of People", results["occupancy"])
+    c2.metric("Temperature", f'{results["temperature"]} °C')
+    c3.metric("Natural Light", f'{results["natural_light"]}%')
+
+    st.subheader("Recommended Control Levels")
+
+    m1, m2 = st.columns(2)
+
+    m1.metric(
+        "❄️ AC Power Level",
+        f'{results["ac_power"]:.1f}%'
+    )
+
+    m2.metric(
+        "💡 Lighting Power Level",
+        f'{results["lighting_power"]:.1f}%'
+    )
+
+    g1, g2 = st.columns(2)
+
+    with g1:
+        st.write("Air Conditioner")
+        st.progress(
+            int(np.clip(round(results["ac_power"]), 0, 100))
+        )
+        st.write(f'{results["ac_power"]:.1f}%')
+
+    with g2:
+        st.write("Lighting")
+        st.progress(
+            int(np.clip(round(results["lighting_power"]), 0, 100))
+        )
+        st.write(f'{results["lighting_power"]:.1f}%')
+
+    st.subheader("Output Comparison")
+
+    fig, ax = plt.subplots(figsize=(7, 3.5))
+
+    ax.bar(
+        ["AC Power", "Lighting Power"],
+        [results["ac_power"], results["lighting_power"]]
+    )
+
+    ax.set_ylim(0, 100)
+    ax.set_ylabel("Control Level (%)")
+    ax.grid(axis="y", alpha=0.25)
+
+    st.pyplot(fig, clear_figure=True)
+    plt.close(fig)
+
+
+# Display fuzzy rules
+with st.expander("Show the 27 Fuzzy Rules"):
+    st.dataframe(
+        pd.DataFrame(rules),
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+st.caption(
+    "Project note: Output values are control percentages generated "
+    "by the fuzzy rules, not actual kWh consumption."
+)
+
