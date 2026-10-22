@@ -135,6 +135,16 @@ if "results" not in st.session_state:
 # Page heading
 st.title("🏠 Smart Home Energy Management")
 st.caption("Fuzzy Logic Controller | Interactive Simulation")
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] [data-testid="stSlider"] {
+        direction: ltr;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 st.info(
     "Adjust the input values and click Calculate to generate the results. "
