@@ -135,6 +135,7 @@ if "results" not in st.session_state:
 # Page heading
 st.title("🏠 Smart Home Energy Management")
 st.caption("Fuzzy Logic Controller | Interactive Simulation")
+
 st.markdown(
     """
     <style>
@@ -142,13 +143,18 @@ st.markdown(
         direction: ltr !important;
     }
 
-    [data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] {
+    [data-testid="stSidebar"] [data-testid="stSlider"] [role="slider"] {
+        direction: ltr !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] > div {
         direction: ltr !important;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
+
 
 
 st.info(
