@@ -138,6 +138,10 @@ st.caption("Fuzzy Logic Controller | Interactive Simulation")
 st.markdown(
     """
     <style>
+    [data-testid="stSidebar"] [data-testid="stSlider"] {
+        direction: ltr !important;
+    }
+
     [data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] {
         direction: ltr !important;
     }
@@ -145,6 +149,8 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+
 st.info(
     "Adjust the input values and click Calculate to generate the results. "
     "This simulation displays control levels, not actual electricity consumption."
